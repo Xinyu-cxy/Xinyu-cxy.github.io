@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Xinyu Cao — Personal Homepage</title>
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<!-- Styles -->
+<link rel="stylesheet" href="css/style.css">
+<!-- KaTeX for LaTeX math rendering -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+
+<!-- Favicon (optional — replace with your own) -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%236366f1'><circle cx='12' cy='12' r='10'/></svg>">
+</head>
+<body>
+
+<!-- ============================================
+     Navigation
+     ============================================ -->
+<nav class="nav" id="nav">
+  <div class="nav-inner">
+    <a href="#" class="nav-logo" id="navLogo">Your Name</a>
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <line x1="4" y1="6" x2="20" y2="6"/>
+        <line x1="4" y1="12" x2="20" y2="12"/>
+        <line x1="4" y1="18" x2="20" y2="18"/>
+      </svg>
+    </button>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="#about" class="active">About</a></li>
+      <li><a href="#notes">Notes</a></li>
+      <li><a href="#projects">Projects</a></li>
+      <li><a href="#publications">Publications</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- ============================================
+     Main Content — only one page visible at a time
+     ============================================ -->
+<main id="mainContent">
+
+<!-- Hero / About -->
+<section class="page active" id="about" data-page="about">
+  <div class="container">
+    <div class="hero-inner reveal">
+      <div class="hero-avatar" id="heroAvatar"></div>
+      <div class="hero-text">
+        <h1 id="heroName"></h1>
+        <p class="role" id="heroRole"></p>
+        <p class="bio" id="heroBio"></p>
+        <div class="socials" id="heroSocials"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Notes -->
+<section class="page" id="notes" data-page="notes">
+  <div class="container">
+    <span class="section-label">Notes</span>
+    <div id="notesHeader">
+      <h2 class="section-title">Thinking &amp; Writing</h2>
+      <p class="section-desc">Notes on topics I'm learning about. Browse chapters, then dive into individual notes.</p>
+    </div>
+
+    <div id="notesContainer" class="reveal-stagger"></div>
+  </div>
+</section>
+
+<!-- Projects -->
+<section class="page" id="projects" data-page="projects">
+  <div class="container">
+    <span class="section-label">Projects</span>
+    <h2 class="section-title">What I've Built</h2>
+    <p class="section-desc">A selection of research and side projects.</p>
+
+    <div class="projects-grid reveal-stagger" id="projectsContainer"></div>
+  </div>
+</section>
+
+<!-- Publications -->
+<section class="page" id="publications" data-page="publications">
+  <div class="container">
+    <span class="section-label">Publications</span>
+    <h2 class="section-title">Papers &amp; Preprints</h2>
+    <p class="section-desc">Peer-reviewed research and technical reports.</p>
+
+    <div class="pub-list reveal-stagger" id="pubsContainer"></div>
+  </div>
+</section>
+
+</main>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="container footer-inner">
+    <p class="footer-text">&copy; <span id="currentYear"></span> Xinyu Cao. All rights reserved.</p>
+    <button class="back-to-top" id="backToTop">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <line x1="12" y1="19" x2="12" y2="5"/>
+        <polyline points="5 12 12 5 19 12"/>
+      </svg>
+      Back to top
+    </button>
+  </div>
+</footer>
+
+<!-- ============================================
+     Scripts
+     ============================================ -->
+<!-- KaTeX auto-render -->
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+<script src="js/data.js"></script>
+<script src="js/notes-data.js"></script>
+<script src="js/render.js"></script>
+<script src="js/main.js"></script>
+
+<!-- Populate About section from data -->
+<script>
+(function() {
+  // About
+  document.getElementById('navLogo').textContent = aboutData.name;
+  document.title = aboutData.name + ' — Personal Homepage';
+  document.getElementById('heroName').textContent = aboutData.name;
+  document.getElementById('heroRole').textContent = aboutData.role;
+  document.getElementById('heroBio').innerHTML = aboutData.bio.replace(/\n/g, '<br>');
+
+  // Avatar
+  const avatar = document.getElementById('heroAvatar');
+  if (aboutData.avatar) {
+    avatar.innerHTML = '<img src="' + aboutData.avatar + '" alt="' + aboutData.name + '">';
+  } else {
+    avatar.innerHTML = '<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>';
+  }
+
+  // Socials
+  const iconSVGs = {
+    github: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.385-1.335-1.755-1.335-1.755-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.605-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12 24 5.37 18.63 0 12 0z"/></svg>',
+    //scholar: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M5.242 13.769L0 9.5 12 0l12 9.5-5.242 4.269C17.548 11.249 14.978 9.5 12 9.5c-2.977 0-5.548 1.748-6.758 4.269zM12 10a7 7 0 1 0 0 14 7 7 0 0 0 0-14z"/></svg>',
+    email: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 6l10 7 10-7"/></svg>',
+    //twitter: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>'
+  };
+
+  const socialsContainer = document.getElementById('heroSocials');
+  socialsContainer.innerHTML = aboutData.socials.map(s => {
+    const icon = iconSVGs[s.icon] || '';
+    const target = s.url.startsWith('http') ? ' target="_blank" rel="noopener"' : '';
+    return '<a href="' + s.url + '" class="social-link"' + target + '>' + icon + ' ' + s.label + '</a>';
+  }).join('');
+})();
+</script>
+
+</body>
+</html>
