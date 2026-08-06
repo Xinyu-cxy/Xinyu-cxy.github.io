@@ -7,7 +7,7 @@
 const aboutData = {
   name: 'Xinyu Cao',
   role: 'undergraduate',
-  bio: "I'm an undergraduate at Fudan University, majoring in Intelligent Science and Technology.   My current work focuses on AI agents, backend engineering and machine learning. \nI hope that one day I'll be able to turn ideas into elegant products.",
+  bio: "I'm an undergraduate at Fudan University, majoring in Intelligent Science and Technology.   My current work focuses on AI agents, backend engineering and machine learning.",
   avatar: './img/avatar.jpg', // Set to 'your-photo.jpg' to show an image, or leave empty for an icon
   socials: [
     { label: 'GitHub',  url: 'https://github.com/Xinyu-cxy',   icon: 'github' },
@@ -23,34 +23,34 @@ const aboutData = {
 
 // ----- Projects -----
 const projectsData = [
-  {
-    name: 'Efficient Transformer Inference',
-    description: 'A system for accelerating transformer model inference on consumer GPUs through kernel fusion and quantization. Achieves 3× speedup over baseline PyTorch implementations.',
-    tags: ['CUDA', 'PyTorch', 'LLMs'],
-    link: 'https://github.com/yourusername/transformer-inference',
-    github: 'https://github.com/yourusername/transformer-inference'
-  },
-  {
-    name: 'Distributed Training Framework',
-    description: 'A lightweight framework for distributed data-parallel training that reduces communication overhead with gradient compression techniques.',
-    tags: ['Python', 'MPI', 'Deep Learning'],
-    link: 'https://github.com/yourusername/dist-train',
-    github: 'https://github.com/yourusername/dist-train'
-  },
-  {
-    name: 'ML Experiment Tracker',
-    description: 'A self-hosted experiment tracking tool with a clean web interface. Logs metrics, hyperparameters, and artifacts with minimal setup.',
-    tags: ['TypeScript', 'React', 'SQLite'],
-    link: 'https://github.com/yourusername/exp-tracker',
-    github: 'https://github.com/yourusername/exp-tracker'
-  },
-  {
-    name: 'Paper Notes CLI',
-    description: 'A command-line tool that helps organize and search through academic paper notes. Supports fuzzy search, tags, and BibTeX export.',
-    tags: ['Rust', 'CLI', 'Research'],
-    link: 'https://github.com/yourusername/paper-notes',
-    github: 'https://github.com/yourusername/paper-notes'
-  }
+  // {
+  //   name: 'Efficient Transformer Inference',
+  //   description: 'A system for accelerating transformer model inference on consumer GPUs through kernel fusion and quantization. Achieves 3× speedup over baseline PyTorch implementations.',
+  //   tags: ['CUDA', 'PyTorch', 'LLMs'],
+  //   link: 'https://github.com/yourusername/transformer-inference',
+  //   github: 'https://github.com/yourusername/transformer-inference'
+  // },
+  // {
+  //   name: 'Distributed Training Framework',
+  //   description: 'A lightweight framework for distributed data-parallel training that reduces communication overhead with gradient compression techniques.',
+  //   tags: ['Python', 'MPI', 'Deep Learning'],
+  //   link: 'https://github.com/yourusername/dist-train',
+  //   github: 'https://github.com/yourusername/dist-train'
+  // },
+  // {
+  //   name: 'ML Experiment Tracker',
+  //   description: 'A self-hosted experiment tracking tool with a clean web interface. Logs metrics, hyperparameters, and artifacts with minimal setup.',
+  //   tags: ['TypeScript', 'React', 'SQLite'],
+  //   link: 'https://github.com/yourusername/exp-tracker',
+  //   github: 'https://github.com/yourusername/exp-tracker'
+  // },
+  // {
+  //   name: 'Paper Notes CLI',
+  //   description: 'A command-line tool that helps organize and search through academic paper notes. Supports fuzzy search, tags, and BibTeX export.',
+  //   tags: ['Rust', 'CLI', 'Research'],
+  //   link: 'https://github.com/yourusername/paper-notes',
+  //   github: 'https://github.com/yourusername/paper-notes'
+  // }
 ];
 
 // ----- Publications -----
