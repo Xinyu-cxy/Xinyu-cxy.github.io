@@ -27,10 +27,10 @@ function mdToHTML(md) {
 
   // Order matters: display math first, then inline math
   protect(/\$\$([\s\S]+?)\$\$/g, (content) =>
-    '$$' + content.trim() + '$$');
+    '$$' + escapeHTML(content.trim()) + '$$');
 
   protect(/\$(.+?)\$/g, (content) =>
-    '$' + content + '$');
+    '$' + escapeHTML(content) + '$');
 
   protect(/`([^`]+)`/g, (content) =>
     '<code>' + escapeHTML(content) + '</code>');
@@ -45,22 +45,42 @@ function mdToHTML(md) {
     const lines = block.split('\n');
     const nonEmpty = lines.filter(l => l.trim());
 
-    // List detection
-    const isUnordered = nonEmpty.length > 0 && nonEmpty.every(l => /^\s*-\s/.test(l.trim()));
-    const isOrdered = nonEmpty.length > 0 && nonEmpty.every(l => /^\s*\d+\.\s/.test(l.trim()));
+    // List detection — skip display math placeholder lines when checking
+    const isPlaceholderLine = (l) => /^\x00PH\d+\x00$/.test(l.trim());
+    const contentLines = nonEmpty.filter(l => !isPlaceholderLine(l));
+    const isUnordered = contentLines.length > 0 && /^\s*-\s/.test(contentLines[0].trim());
+    const isOrdered = contentLines.length > 0 && /^\s*\d+\.\s/.test(contentLines[0].trim());
 
-    if (isUnordered) {
-      const items = nonEmpty
-        .map(l => '<li>' + processInline(l.trim().replace(/^-\s*/, '')) + '</li>')
-        .join('');
-      return '<ul>' + items + '</ul>';
-    }
+    if (isUnordered || isOrdered) {
+      const marker = isUnordered ? /^\s*-\s*/ : /^\s*\d+\.\s*/;
+      const items = [];
+      let itemContent = [];
 
-    if (isOrdered) {
-      const items = nonEmpty
-        .map(l => '<li>' + processInline(l.trim().replace(/^\d+\.\s*/, '')) + '</li>')
-        .join('');
-      return '<ol>' + items + '</ol>';
+      function flushItem() {
+        if (itemContent.length > 0) {
+          items.push('<li>' + itemContent.join('') + '</li>');
+          itemContent = [];
+        }
+      }
+
+      for (const line of nonEmpty) {
+        const text = line.trim();
+        if (marker.test(text)) {
+          flushItem();
+          itemContent.push(processInline(text.replace(marker, '')));
+        } else if (isPlaceholderLine(text)) {
+          const placeholder = ph[parseInt(text.match(/^\x00PH(\d+)\x00$/)[1])];
+          itemContent.push(placeholder.html.startsWith('$$')
+            ? '<p>' + text + '</p>'
+            : '<br>' + text);
+        } else {
+          itemContent.push('<br>' + processInline(text));
+        }
+      }
+      flushItem();
+
+      const tag = isUnordered ? 'ul' : 'ol';
+      return '<' + tag + '>\n' + items.join('\n') + '\n</' + tag + '>';
     }
 
     // Heading
@@ -83,8 +103,9 @@ function mdToHTML(md) {
           segments.push('<p>' + processInline(textAccum.join(' ')) + '</p>');
           textAccum = [];
         }
-        // Output display math directly (block-level)
-        segments.push(ph[parseInt(dm[1])].html);
+        // Output display math wrapped in <p> to prevent HTML parser
+        // from interpreting literal '<' as tag openers (e.g. <k in \min_{0\le j<k})
+        segments.push('<p>' + ph[parseInt(dm[1])].html + '</p>');
       } else {
         textAccum.push(t);
       }
@@ -99,9 +120,12 @@ function mdToHTML(md) {
   }).join('\n');
 
   // Restore any remaining placeholders inside inline contexts
+  // NOTE: Use split/join rather than String.replace() because
+  // .replace() treats $ in the replacement string as special
+  // (e.g. $$ → $), which would break display math delimiters.
   let final = result;
   for (const p of ph) {
-    final = final.replace(p.marker, p.html);
+    final = final.split(p.marker).join(p.html);
   }
 
   return final;

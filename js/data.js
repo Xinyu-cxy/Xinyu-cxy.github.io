@@ -7,8 +7,8 @@
 const aboutData = {
   name: 'Xinyu Cao',
   role: 'undergraduate',
-  bio: "I'm an undergraduate at Fudan University, majoring in Intelligent Science and Technology.   My current work focuses on AI agents, backend engineering and machine learning.",
-  avatar: './img/avatar.jpg', // Set to 'your-photo.jpg' to show an image, or leave empty for an icon
+  bio: "I'm an undergraduate at Fudan University, majoring in Intelligent Science and Technology.   My current study focuses on computer vision, AI agents and backend engineering.",
+  avatar: './img/avatar.jpg',
   socials: [
     { label: 'GitHub',  url: 'https://github.com/Xinyu-cxy',   icon: 'github' },
     // { label: 'Scholar', url: 'https://scholar.google.com',        icon: 'scholar' },

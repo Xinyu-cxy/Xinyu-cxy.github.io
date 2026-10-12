@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Xinyu Cao — Personal Homepage</title>
+<title>Xinyu</title>
 
 <!-- Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,7 +16,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
 
 <!-- Favicon (optional — replace with your own) -->
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%236366f1'><circle cx='12' cy='12' r='10'/></svg>">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%236366f1'><path d='M7 2h10l6 7-11 13L1 9 7 2z'/></svg>">
 </head>
 <body>
 
@@ -37,7 +37,7 @@
       <li><a href="#about" class="active">About</a></li>
       <li><a href="#notes">Notes</a></li>
       <li><a href="#projects">Projects</a></li>
-      <li><a href="#publications">Publications</a></li>
+      <!-- <li><a href="#publications">Publications</a></li> -->
     </ul>
   </div>
 </nav>
@@ -68,7 +68,7 @@
     <span class="section-label">Notes</span>
     <div id="notesHeader">
       <h2 class="section-title">Thinking &amp; Writing</h2>
-      <p class="section-desc">Notes on topics I'm learning about. Browse chapters, then dive into individual notes.</p>
+      <p class="section-desc">Notes on topics I'm learning about.</p>
     </div>
 
     <div id="notesContainer" class="reveal-stagger"></div>
@@ -80,7 +80,7 @@
   <div class="container">
     <span class="section-label">Projects</span>
     <h2 class="section-title">What I've Built</h2>
-    <p class="section-desc">A selection of research and side projects.</p>
+    <p class="section-desc">Explore my favourite ideas.</p>
 
     <div class="projects-grid reveal-stagger" id="projectsContainer"></div>
   </div>
@@ -130,7 +130,6 @@
 (function() {
   // About
   document.getElementById('navLogo').textContent = aboutData.name;
-  document.title = aboutData.name + ' — Personal Homepage';
   document.getElementById('heroName').textContent = aboutData.name;
   document.getElementById('heroRole').textContent = aboutData.role;
   document.getElementById('heroBio').innerHTML = aboutData.bio.replace(/\n/g, '<br>');
