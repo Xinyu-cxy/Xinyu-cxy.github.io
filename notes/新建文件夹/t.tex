@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>SQL Cheat Sheet</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: "Helvetica Neue", Arial, "Microsoft YaHei", sans-serif;
+         background:#e9e9e9; margin:0; padding:20px; color:#3a3a3a; }
+  .sheet { background:#fff; max-width:1100px; margin:0 auto; padding:28px 26px;
+           box-shadow:0 2px 8px rgba(0,0,0,.25); }
+  .head { display:flex; align-items:center; gap:14px; border-bottom:3px solid #663399;
+          padding-bottom:12px; margin-bottom:18px; }
+  .logo { background:#663399; color:#fff; font-weight:700; padding:8px 12px;
+          font-size:15px; border-radius:3px; white-space:nowrap; }
+  .head h1 { margin:0; font-size:20px; color:#663399; }
+  .head .sub { margin:2px 0 0; font-size:11px; color:#777; }
+  .cols { column-count:3; column-gap:18px; }
+  section { break-inside:avoid; margin:0 0 16px; border:1px solid #d8d8d8;
+            border-radius:3px; overflow:hidden; }
+  section h2 { margin:0; background:#663399; color:#fff; font-size:12.5px;
+               padding:5px 9px; letter-spacing:.3px; }
+  section h3 { margin:0; background:#efeaf5; color:#663399; font-size:11px;
+               padding:3px 9px; border-top:1px solid #e2dcea; border-bottom:1px solid #e2dcea; }
+  .bd { padding:7px 9px; }
+  pre { margin:5px 0; padding:6px 8px; background:#f6f6f6; border:1px solid #e3e3e3;
+        border-radius:3px; font-family:Consolas, Monaco, "Courier New", monospace;
+        font-size:10px; line-height:1.45; white-space:pre; overflow-x:auto; }
+  code { font-family:Consolas, Monaco, monospace; background:#f6f6f6;
+         border:1px solid #e3e3e3; padding:0 3px; border-radius:3px; font-size:10px; }
+  table { width:100%; border-collapse:collapse; margin:5px 0; font-size:10px; }
+  th, td { border:1px solid #d0d0d0; padding:3px 6px; text-align:left; vertical-align:top; }
+  th { background:#efeaf5; color:#663399; }
+  ul { margin:4px 0; padding-left:16px; }
+  li { margin:2px 0; font-size:10.5px; }
+  .note { font-style:italic; color:#888; font-size:10px; margin:4px 0; }
+  .foot { margin-top:14px; border-top:2px solid #663399; padding-top:8px;
+          display:flex; justify-content:space-between; font-size:10px; color:#777; }
+  @media print { body { background:#fff; padding:0; } .sheet { box-shadow:none; max-width:none; } }
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <div class="head">
+    <div class="logo">SQL&nbsp;Cheatsheet</div>
+    <div>
+      <h1>Structured Query Language Cheat Sheet</h1>
+      <p class="sub">DDL · DML · Query · View · Authorization · Assertion</p>
+    </div>
+  </div>
+
+  <div class="cols">
+
+  <section>
+    <h2>1. Data Definition（数据定义）</h2>
+    <h3>CREATE TABLE</h3>
+    <div class="bd">
+<pre>CREATE TABLE Branch
+(
+    branch_id  VARCHAR(15),
+    name       VARCHAR(30) NOT NULL,
+    asset      INT UNSIGNED NOT NULL,
+    PRIMARY KEY (branch_id)
+);</pre>
+    <p class="note">列定义 = 名字 name + 类型 type + 约束 constraint</p>
+<pre>CREATE TABLE Owner
+(
+    account_id  VARCHAR(15),
+    customer_id VARCHAR(15),
+    PRIMARY KEY (account_id, customer_id),
+    FOREIGN KEY (account_id)  REFERENCES Account(account_id),
+    FOREIGN KEY (customer_id) REFERENCES Customer(customer_id)
+);</pre>
+    </div>
+    <h3>DROP / ALTER TABLE</h3>
+    <div class="bd">
+<pre>DROP TABLE Branch;
+
+-- 加 / 删 列
+ALTER TABLE Branch ADD  branch_phone VARCHAR(20);
+ALTER TABLE Branch DROP branch_phone;
+
+-- 加 / 删 约束
+ALTER TABLE Branch ADD PRIMARY KEY (branch_id);
+ALTER TABLE Owner  ADD FOREIGN KEY (customer_id)
+    REFERENCES Customer(customer_id);</pre>
+    </div>
+  </section>
+
+  <section>
+    <h2>2. Data Modification（数据修改）</h2>
+    <h3>INSERT</h3>
+    <div class="bd">
+<pre>INSERT INTO Branch VALUES ('B1', 'Central', 1);
+
+-- 多行插入
+INSERT INTO Branch VALUES ('B1', ......)
+                          ('B2', ......);
+
+-- 从文件批量导入
+LOAD DATA LOCAL INFILE 'text.txt'
+INTO TABLE Branch
+FIELDS TERMINATED BY ';'
+LINES  TERMINATED BY '\n';</pre>
+    </div>
+    <h3>DELETE</h3>
+    <div class="bd">
+<pre>DELETE FROM Branch;                    -- 删全部
+DELETE FROM Branch WHERE name = 'CENTRAL';</pre>
+    </div>
+    <h3>UPDATE</h3>
+    <div class="bd">
+<pre>UPDATE Branch SET asset = 0
+WHERE  branch_id = 'B1';
+
+UPDATE Account SET balance = balance * 1.06
+WHERE  balance &gt; 500;
+
+-- CASE 分支更新
+UPDATE Account
+SET balance = CASE
+    WHEN balance &lt; 500 THEN balance * 1.05
+    ELSE balance * 1.06
+END;</pre>
+    </div>
+  </section>
+
+  <section>
+    <h2>3. Query — SELECT 基础</h2>
+    <div class="bd">
+<pre>SELECT name FROM Customer;             -- 单列
+SELECT *    FROM Customer;             -- 所有列
+SELECT loan_id, amount / 7.8 FROM Loan; -- 表达式
+
+-- 笛卡尔积 Cartesian product
+SELECT * FROM Customer, Borrower;
+
+-- WHERE 连接条件
+SELECT Borrower.loan_id, Customer.name
+FROM   Customer, Borrower
+WHERE  Customer.customer_id = Borrower.customer_id;
+
+SELECT loan_id FROM Loan
+WHERE  branch_id = 'B1' AND amount &gt; 1200;
+
+-- 去重
+SELECT DISTINCT Branch.name
+FROM   Branch, Loan
+WHERE  Branch.branch_id = Loan.branch_id;</pre>
+    </div>
+    <h3>别名 AS / 表重命名</h3>
+    <div class="bd">
+<pre>SELECT DISTINCT Branch.name AS 'Branch name' ...
+
+SELECT DISTINCT B.name AS 'Branch name'
+FROM   Branch B, Loan L
+WHERE  B.branch_id = L.branch_id;</pre>
+    </div>
+    <h3>模式匹配 LIKE</h3>
+    <div class="bd">
+      <table>
+        <tr><th>符号</th><th>含义</th></tr>
+        <tr><td><code>%</code></td><td>匹配任意子串</td></tr>
+        <tr><td><code>_</code></td><td>匹配任意单个字符</td></tr>
+      </table>
+<pre>SELECT name FROM Customer
+WHERE  address LIKE '%3n%';</pre>
+    </div>
+    <h3>排序 ORDER BY</h3>
+    <div class="bd">
+      <table>
+        <tr><th>关键字</th><th>含义</th></tr>
+        <tr><td><code>DESC</code></td><td>降序 descending</td></tr>
+        <tr><td><code>ASC</code></td><td>升序 ascending（默认）</td></tr>
+      </table>
+<pre>SELECT name FROM Customer ORDER BY name ASC;
+SELECT * FROM Loan
+ORDER BY branch_id ASC, amount DESC;</pre>
+    </div>
+  </section>
+
+  <section>
+    <h2>4. Aggregation（聚合）</h2>
+    <div class="bd">
+      <table>
+        <tr><th>AVG</th><th>SUM</th><th>MIN</th><th>MAX</th><th>COUNT</th></tr>
+      </table>
+<pre>SELECT AVG(balance) FROM Account
+WHERE  branch_id = 'B2';
+
+-- 分组
+SELECT branch_id, AVG(balance)
+FROM   Account
+GROUP  BY branch_id;
+
+-- 分组后过滤
+SELECT branch_id, AVG(balance)
+FROM   Account
+GROUP  BY branch_id
+HAVING AVG(balance) &gt;= 650;</pre>
+    </div>
+  </section>
+
+  <section>
+    <h2>5. Nested Query（嵌套查询）</h2>
+    <div class="bd">
+      <table>
+        <tr><td><code>WHERE col IN (…)</code></td></tr>
+        <tr><td><code>WHERE col ? ALL (…)</code></td></tr>
+        <tr><td><code>WHERE col ? SOME (…)</code></td></tr>
+        <tr><td><code>WHERE EXISTS (…)</code></td></tr>
+      </table>
+<pre>SELECT E.name FROM Employee E
+WHERE  E.employee_id IN (
+    SELECT W.employee_id FROM Works_in W
+    WHERE  W.department_id = 1);
+
+SELECT D.name FROM Department D
+WHERE  D.budget &gt; ALL (
+    SELECT D2.budget FROM Department D2
+    WHERE  D2.department_id IN (
+        SELECT W.department_id FROM Works_in W
+        WHERE  W.employee_id = 4));
+
+SELECT D.name FROM Department D
+WHERE  D.budget &gt; SOME (
+    SELECT D2.budget FROM Department D2
+    WHERE  D2.department_id IN (
+        SELECT W.department_id FROM Works_in W
+        WHERE  W.employee_id = 2));
+
+SELECT E.name FROM Employee E
+WHERE  EXISTS (
+    SELECT * FROM Works_in W
+    WHERE  E.employee_id = W.employee_id
+      AND  W.department_id = 1);</pre>
+    </div>
+  </section>
+
+  <section>
+    <h2>6. Set Operations（集合运算）</h2>
+    <div class="bd">
+      <p class="note">UNION · INTERSECT · EXCEPT</p>
+<pre>SELECT E.name FROM Employee E, Works_in W
+WHERE  E.employee_id = W.employee_id
+  AND  W.department_id = 1
+UNION        -- 或 INTERSECT / EXCEPT
+SELECT E.name FROM Employee E, Works_in W
+WHERE  E.employee_id = W.employee_id
+  AND  W.department_id = 3;</pre>
+      <p class="note">… =1 EXCEPT … =3：在部门 1 但不在部门 3</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>7. Join（连接）</h2>
+    <div class="bd">
+<pre>-- 等值连接
+SELECT * FROM Employee E, Department D
+WHERE  E.department_id = D.department_id;
+
+SELECT * FROM Employee E
+INNER  JOIN Department D
+ON     E.department_id = D.department_id;</pre>
+      <table>
+        <tr><th>JOIN 类型</th><th>行为</th></tr>
+        <tr><td>LEFT OUTER JOIN</td><td>左表全保留；右表不匹配补 NULL</td></tr>
+        <tr><td>RIGHT OUTER JOIN</td><td>右表全保留；左表不匹配补 NULL</td></tr>
+      </table>
+      <p class="note">两表不匹配 → 填 NULL</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>8. NULL 与三值逻辑</h2>
+    <div class="bd">
+<pre>SELECT name FROM Employee
+WHERE  salary IS NULL;</pre>
+      <ul>
+        <li><code>SUM, AVG, MIN, MAX, COUNT(expr)</code> 忽略 NULL</li>
+        <li><code>COUNT(*)</code> 数行数，不忽略 NULL</li>
+        <li>null = 值不存在；逻辑值：TRUE / FALSE / UNKNOWN</li>
+        <li>含 null 的算术结果仍为 null：<code>null + 5 = null</code></li>
+        <li>普通比较（= &lt; &gt;）遇 null → UNKNOWN：<code>5 &lt; null</code>、<code>null = null</code> 均返回 UNKNOWN</li>
+        <li>可用 <code>IS UNKNOWN</code> 判断</li>
+        <li>WHERE / HAVING 中 UNKNOWN 按 false 处理</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>4. VIEW（视图）</h2>
+    <div class="bd">
+<pre>CREATE VIEW Employee_hide_salary AS (
+    SELECT employee_id, name FROM Employee
+);
+
+CREATE VIEW Dept_size(name, num_of_employee) AS (
+    SELECT D.name, COUNT(*)
+    FROM   Department D, Works_in W
+    WHERE  D.department_id = W.department_id
+    GROUP  BY W.department_id
+);</pre>
+    </div>
+  </section>
+
+  <section>
+    <h2>5. Authorization（授权）</h2>
+    <div class="bd">
+      <p class="note">授权对象：table / view；被授予者：user / role</p>
+<pre>GRANT SELECT ON Department TO Johnson, Brown;
+GRANT UPDATE (budget) ON Department TO Johnson;
+GRANT UPDATE (budget) ON Department TO manager;
+REVOKE ... ON ... FROM ...;
+
+CREATE ROLE manager;
+GRANT manager TO Brown;
+
+CREATE USER Johnson IDENTIFIED BY 'password';</pre>
+    </div>
+  </section>
+
+  <section>
+    <h2>6. Assertion（断言）</h2>
+    <div class="bd">
+<pre>CREATE ASSERTION EmpsNoLessThanDepts
+CHECK (
+    (SELECT COUNT(*) FROM Department) &lt;=
+    (SELECT COUNT(*) FROM Employee)
+);</pre>
+    </div>
+  </section>
+
+  </div>
+
+  <div class="foot">
+    <span>Structured Query Language — Cheat Sheet</span>
+    <span>Page 1 of 1</span>
+  </div>
+</div>
+</body>
+</html>

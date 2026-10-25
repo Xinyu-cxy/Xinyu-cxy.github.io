@@ -23,13 +23,12 @@ const aboutData = {
 
 // ----- Projects -----
 const projectsData = [
-  // {
-  //   name: 'Efficient Transformer Inference',
-  //   description: 'A system for accelerating transformer model inference on consumer GPUs through kernel fusion and quantization. Achieves 3× speedup over baseline PyTorch implementations.',
-  //   tags: ['CUDA', 'PyTorch', 'LLMs'],
-  //   link: 'https://github.com/yourusername/transformer-inference',
-  //   github: 'https://github.com/yourusername/transformer-inference'
-  // },
+  {
+    name: 'RAG Chatbot',
+    description: 'A RAG chatbot that answers questions about HKU InnoWing. Scraping and image captioning are used to build chroma database. The system identifies counting and compound questions and adopts both precise and semantic search for generation.',
+    tags: ['RAG', 'chroma', 'LLMs'],
+    github: 'https://github.com/Xinyu-cxy/ChatbotChallenge2026'
+  },
   // {
   //   name: 'Distributed Training Framework',
   //   description: 'A lightweight framework for distributed data-parallel training that reduces communication overhead with gradient compression techniques.',
