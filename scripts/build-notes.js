@@ -14,121 +14,175 @@ const OUTPUT_FILE = path.join(__dirname, '..', 'js', 'notes-data.js');
 
 // ----- Simple Markdown to HTML converter -----
 function mdToHTML(md) {
-  const ph = [];
+  const placeholders = [];
+  md = md.replace(/\r\n?/g, '\n');
 
-  function protect(regex, wrapFn) {
-    md = md.replace(regex, (...args) => {
-      const i = ph.length;
-      const captured = args.slice(1, args.length - 2);
-      ph.push({ marker: '\x00PH' + i + '\x00', html: wrapFn.apply(null, captured) });
-      return '\x00PH' + i + '\x00';
+  function protect(html, type) {
+    const marker = '\x00PH' + placeholders.length + '\x00';
+    placeholders.push({ marker, html, type });
+    return marker;
+  }
+
+  // Protect code before math so delimiters inside code are left untouched.
+  md = md.replace(/^(```+|~~~+)([^\n]*)\n([\s\S]*?)^\1[ \t]*$/gm,
+    (_match, fence, info, content) => {
+      const language = info.trim().split(/\s+/)[0];
+      if (language === 'algorithm') {
+        return protect('<div class="algorithm-block">' +
+          escapeHTML(content.replace(/\n$/, '')) + '</div>', 'algorithm');
+      }
+      const className = language ? ' class="language-' + escapeHTML(language) + '"' : '';
+      return protect('<pre><code' + className + '>' +
+        escapeHTML(content.replace(/\n$/, '')) + '</code></pre>', 'code');
     });
+
+  md = md.replace(/\$\$([\s\S]+?)\$\$/g, (_match, content) =>
+    protect('$$' + escapeHTML(content.trim()) + '$$', 'display-math'));
+  md = md.replace(/\$(.+?)\$/g, (_match, content) =>
+    protect('$' + escapeHTML(content) + '$', 'inline-math'));
+  md = md.replace(/`([^`]+)`/g, (_match, content) =>
+    protect('<code>' + escapeHTML(content) + '</code>', 'inline-code'));
+  md = md.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_match, text, url) =>
+    protect('<a href="' + url + '" target="_blank" rel="noopener">' +
+      escapeHTML(text) + '</a>', 'link'));
+
+  const lines = md.split('\n');
+  const output = [];
+  let paragraph = [];
+  let listTag = '';
+  let listItems = [];
+  let pendingListBlank = false;
+
+  function flushParagraph() {
+    if (paragraph.length) {
+      output.push('<p>' + processInline(paragraph.join(' ')) + '</p>');
+      paragraph = [];
+    }
   }
 
-  // Order matters: display math first, then inline math
-  protect(/\$\$([\s\S]+?)\$\$/g, (content) =>
-    '$$' + escapeHTML(content.trim()) + '$$');
-
-  protect(/\$(.+?)\$/g, (content) =>
-    '$' + escapeHTML(content) + '$');
-
-  protect(/`([^`]+)`/g, (content) =>
-    '<code>' + escapeHTML(content) + '</code>');
-
-  protect(/\[([^\]]+)\]\(([^)]+)\)/g, (text, url) =>
-    '<a href="' + url + '" target="_blank" rel="noopener">' + escapeHTML(text) + '</a>');
-
-  // Split into blocks by blank lines
-  const blocks = md.split(/\n\s*\n/).filter(b => b.trim());
-
-  const result = blocks.map(block => {
-    const lines = block.split('\n');
-    const nonEmpty = lines.filter(l => l.trim());
-
-    // List detection — skip display math placeholder lines when checking
-    const isPlaceholderLine = (l) => /^\x00PH\d+\x00$/.test(l.trim());
-    const contentLines = nonEmpty.filter(l => !isPlaceholderLine(l));
-    const isUnordered = contentLines.length > 0 && /^\s*-\s/.test(contentLines[0].trim());
-    const isOrdered = contentLines.length > 0 && /^\s*\d+\.\s/.test(contentLines[0].trim());
-
-    if (isUnordered || isOrdered) {
-      const marker = isUnordered ? /^\s*-\s*/ : /^\s*\d+\.\s*/;
-      const items = [];
-      let itemContent = [];
-
-      function flushItem() {
-        if (itemContent.length > 0) {
-          items.push('<li>' + itemContent.join('') + '</li>');
-          itemContent = [];
-        }
-      }
-
-      for (const line of nonEmpty) {
-        const text = line.trim();
-        if (marker.test(text)) {
-          flushItem();
-          itemContent.push(processInline(text.replace(marker, '')));
-        } else if (isPlaceholderLine(text)) {
-          const placeholder = ph[parseInt(text.match(/^\x00PH(\d+)\x00$/)[1])];
-          itemContent.push(placeholder.html.startsWith('$$')
-            ? '<p>' + text + '</p>'
-            : '<br>' + text);
-        } else {
-          itemContent.push('<br>' + processInline(text));
-        }
-      }
-      flushItem();
-
-      const tag = isUnordered ? 'ul' : 'ol';
-      return '<' + tag + '>\n' + items.join('\n') + '\n</' + tag + '>';
+  function flushList() {
+    if (listTag) {
+      output.push('<' + listTag + '>\n' + listItems.join('\n') + '\n</' + listTag + '>');
+      listTag = '';
+      listItems = [];
     }
-
-    // Heading
-    const hMatch = lines[0].trim().match(/^(#{1,6})\s+(.+)$/);
-    if (hMatch && lines.length === 1) {
-      const level = hMatch[1].length;
-      return '<h' + level + '>' + processInline(hMatch[2]) + '</h' + level + '>';
-    }
-
-    // Complex block: split by display math placeholders at line level
-    const segments = [];
-    let textAccum = [];
-
-    for (const line of lines) {
-      const t = line.trim();
-      const dm = t.match(/^\x00PH(\d+)\x00$/);
-      if (dm) {
-        // Flush accumulated text
-        if (textAccum.length > 0) {
-          segments.push('<p>' + processInline(textAccum.join(' ')) + '</p>');
-          textAccum = [];
-        }
-        // Output display math wrapped in <p> to prevent HTML parser
-        // from interpreting literal '<' as tag openers (e.g. <k in \min_{0\le j<k})
-        segments.push('<p>' + ph[parseInt(dm[1])].html + '</p>');
-      } else {
-        textAccum.push(t);
-      }
-    }
-
-    // Flush remaining text
-    if (textAccum.length > 0) {
-      segments.push('<p>' + processInline(textAccum.join(' ')) + '</p>');
-    }
-
-    return segments.join('\n');
-  }).join('\n');
-
-  // Restore any remaining placeholders inside inline contexts
-  // NOTE: Use split/join rather than String.replace() because
-  // .replace() treats $ in the replacement string as special
-  // (e.g. $$ → $), which would break display math delimiters.
-  let final = result;
-  for (const p of ph) {
-    final = final.split(p.marker).join(p.html);
   }
 
-  return final;
+  function flushTextBlocks() {
+    flushParagraph();
+    flushList();
+  }
+
+  function tableCells(line) {
+    return line.trim().replace(/^\|/, '').replace(/\|$/, '').split('|')
+      .map(cell => cell.trim());
+  }
+
+  function isTableSeparator(line) {
+    return /^\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?$/.test(line);
+  }
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+    if (!trimmed) {
+      flushParagraph();
+      if (listTag) pendingListBlank = true;
+      else flushList();
+      continue;
+    }
+
+    const listMatch = trimmed.match(/^([-*+]|\d+\.)\s+(.+)$/);
+    if (listTag && pendingListBlank) {
+      const nextListTag = listMatch
+        ? (/^\d/.test(listMatch[1]) ? 'ol' : 'ul')
+        : '';
+      if (nextListTag && nextListTag !== listTag ||
+          !nextListTag && !/^\s/.test(line)) {
+        flushList();
+      }
+      pendingListBlank = false;
+    }
+
+    const heading = trimmed.match(/^(#{1,6})\s+(.+)$/);
+    if (heading) {
+      flushTextBlocks();
+      const level = heading[1].length;
+      output.push('<h' + level + '>' + processInline(heading[2]) + '</h' + level + '>');
+      continue;
+    }
+
+    if (/^(---+|___+|\*\*\*+)\s*$/.test(trimmed)) {
+      flushTextBlocks();
+      output.push('<hr>');
+      continue;
+    }
+
+    if (i + 1 < lines.length && trimmed.includes('|') && isTableSeparator(lines[i + 1].trim())) {
+      flushTextBlocks();
+      const headers = tableCells(trimmed);
+      i += 2;
+      const rows = [];
+      while (i < lines.length && lines[i].trim().includes('|')) {
+        rows.push(tableCells(lines[i]));
+        i++;
+      }
+      i--;
+      output.push('<table><thead><tr>' +
+        headers.map(cell => '<th>' + processInline(cell) + '</th>').join('') +
+        '</tr></thead><tbody>' +
+        rows.map(row => '<tr>' + headers.map((_header, index) =>
+          '<td>' + processInline(row[index] || '') + '</td>').join('') + '</tr>').join('') +
+        '</tbody></table>');
+      continue;
+    }
+
+    if (listMatch) {
+      flushParagraph();
+      const tag = /^\d/.test(listMatch[1]) ? 'ol' : 'ul';
+      if (listTag && listTag !== tag) flushList();
+      if (!listTag) listTag = tag;
+      listItems.push('<li>' + processInline(listMatch[2]) + '</li>');
+      pendingListBlank = false;
+      continue;
+    }
+
+    const placeholderMatch = trimmed.match(/^\x00PH(\d+)\x00$/);
+    if (placeholderMatch) {
+      const placeholder = placeholders[Number(placeholderMatch[1])];
+      if (placeholder.type === 'code' || placeholder.type === 'algorithm' ||
+          placeholder.type === 'display-math') {
+        if (placeholder.type === 'display-math' && listTag) {
+          listItems[listItems.length - 1] = listItems[listItems.length - 1]
+            .replace('</li>', '<p>' + trimmed + '</p></li>');
+          pendingListBlank = false;
+          continue;
+        }
+        flushTextBlocks();
+        output.push(placeholder.type === 'display-math'
+          ? '<p>' + trimmed + '</p>'
+          : trimmed);
+        continue;
+      }
+    }
+
+    if (listTag) {
+      listItems[listItems.length - 1] = listItems[listItems.length - 1]
+        .replace('</li>', (pendingListBlank ? '<p>' : '<br>') +
+          processInline(trimmed) + (pendingListBlank ? '</p>' : '') + '</li>');
+      pendingListBlank = false;
+    } else {
+      paragraph.push(trimmed);
+    }
+  }
+
+  flushTextBlocks();
+
+  let result = output.join('\n');
+  for (const placeholder of placeholders) {
+    result = result.split(placeholder.marker).join(placeholder.html);
+  }
+  return result;
 }
 
 function processInline(text) {
